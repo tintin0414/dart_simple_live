@@ -1,4 +1,4 @@
-name: Build TV APK (Manual, Unsigned)
+name: Build TV APK (Auto Signed)
 
 on:
   workflow_dispatch:
@@ -22,14 +22,31 @@ jobs:
           flutter-version: '3.38.x'
           cache: true
 
+      # 1. 在云端自动生成签名文件
+      - name: Generate Keystore
+        run: |
+          keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias release -storepass 123456 -keypass 123456 -dname "CN=Android Debug,O=Android,C=US"
+
+      # 2. 把签名文件配置到项目里（解决刚才那个 null 的报错）
+      - name: Configure Signing
+        run: |
+          cd simple_live_tv_app/android
+          mv ../../release.jks app/release.jks
+          echo "storePassword=123456" > key.properties
+          echo "keyPassword=123456" >> key.properties
+          echo "keyAlias=release" >> key.properties
+          echo "storeFile=release.jks" >> key.properties
+
+      # 3. 开始打包 Release 版本
       - name: Build TV APK
         run: |
           cd simple_live_tv_app
           flutter pub get
           flutter build apk --release --split-per-abi
 
+      # 4. 上传打包好的安装包
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: tv-apk-unsigned
+          name: tv-apk
           path: simple_live_tv_app/build/app/outputs/flutter-apk/*.apk
