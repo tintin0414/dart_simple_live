@@ -1,0 +1,35 @@
+name: Build TV APK (Manual, Unsigned)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.x'
+          cache: true
+
+      - name: Build TV APK
+        run: |
+          cd simple_live_tv_app
+          flutter pub get
+          flutter build apk --release --split-per-abi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tv-apk-unsigned
+          path: simple_live_tv_app/build/app/outputs/flutter-apk/*.apk
