@@ -1,0 +1,23 @@
+name: Generate Keystore
+on:
+  workflow_dispatch:
+
+jobs:
+  gen-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Generate Keystore
+        run: |
+          # 生成签名文件（密码设置为 123456，你可以自己改）
+          keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias release -storepass 123456 -keypass 123456 -dname "CN=Android Debug,O=Android,C=US"
+          
+          echo "================ 请复制下面的 Base64 字符串 ================"
+          base64 -w 0 release.jks
+          echo ""
+          echo "=========================================================="
